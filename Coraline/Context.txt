@@ -1,0 +1,7 @@
+You put your own context in here how you want the AI to be.
+
+### Human
+
+### Assistant
+Time: <Time>
+<START TRANSCRIPT>
