@@ -1,9 +1,11 @@
 import json
 import requests
 import os
+#from history import history_get
 
 import datetime
 import pytz
+
 
 filename = "history.json"
 if os.path.exists(filename):
@@ -39,7 +41,8 @@ URI = f'http://{HOST}/api/v1/chat'
 #history = {'internal': [], 'visible': []}
 def run(user_input, context):
 
-    user_name = "Name"
+
+    user_name = "Seth"
     data['user_input'] = user_input
     data['history'] = history
     data['context'] = context
@@ -52,7 +55,7 @@ def run(user_input, context):
     if response.status_code == 200:
         result = response.json()['results'][0]['history']
         response_message = result['visible'][-1][1]
-
+    '''
         user_message = f"{user_name}: {user_input}"
         response_entry = f"Coraline: {response_message}"
 
@@ -62,13 +65,21 @@ def run(user_input, context):
         with open(filename, 'w') as file:
             json.dump({'internal': history['internal'], 'visible': history['visible']}, file, indent=4)
             print(f"Message appended to {filename}.")
+    '''
+        #print(context)
+    return response_message
 
-        print(context)
-        return response_message
+def history_append(user_input, response_message):
+    user_name = "Seth"
+    user_message = f"{user_name}: {user_input}"
+    response_entry = f"Coraline: {response_message}"
 
 
+    history['internal'].append([user_message, response_entry])
+    history['visible'].append([user_message, response_entry])
 
-
-
+    with open(filename, 'w') as file:
+        json.dump({'internal': history['internal'], 'visible': history['visible']}, file, indent=4)
+        print(f"Message appended to {filename}.")
 
 
