@@ -7,7 +7,7 @@ Telegram - Done
 Simple History - Done
 
 
-Stable Diffusion add-on - Not Done
+Stable Diffusion add-on - Working but not how I want it to
 
 
 More long-term/complex memory - Not Done
