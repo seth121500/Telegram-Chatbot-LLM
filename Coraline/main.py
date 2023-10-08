@@ -4,12 +4,13 @@ import websocket
 import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, ApplicationBuilder, MessageHandler, ApplicationHandlerStop, ContextTypes, TypeHandler, filters
-from Coraline_model import run
+from Coraline_model import run, history_append
 from Vox import speak
 from Coraline_Voice_JP import translate_text
 import requests
 import datetime
 from dotenv import load_dotenv
+import asyncio
 
 from bs4 import BeautifulSoup
 import base64
@@ -20,6 +21,40 @@ CREATOR_ID = os.getenv('CREATOR_ID')
 if CREATOR_ID is not None:
     CREATOR_ID = int(CREATOR_ID)
 Telegram_API  = os.getenv('TELEGRAM_API')
+
+async def send_message(update: Update, Coraline_Text):
+    Coraline_JP = translate_text(Coraline_Text)
+    speak(Coraline_JP)
+    audio_JP = 'output.wav'
+    performer = "Coraline"  # Replace with your bot's name
+    title = " "
+
+    sentence_delimiters = ['.', '!', '?']
+
+    sentences = []
+
+    current_sentence = ''
+    for char in Coraline_Text:
+        current_sentence += char
+        if char in sentence_delimiters:
+            sentences.append(current_sentence.strip())
+            current_sentence = ''
+
+    for sentence in sentences:
+        if sentence:
+            await update.message.reply_text(sentence)
+    
+
+
+    output_text = "output.txt"
+
+    with open(output_text, 'w', encoding='utf-8') as text:
+        text.write(Coraline_JP)
+
+    await update.message.reply_audio(audio=open(audio_JP, 'rb'))
+
+
+
 
 async def whitelist_users(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_chat.id != CREATOR_ID:
@@ -67,49 +102,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context_with_current_time = context.replace('<Time>', formatted_time)
 
+
     Coraline_Text = run(update.message.text,context_with_current_time)
 
-    #img_url = BeautifulSoup(text, "html.parser").find_all('img')[0]['src']
-    #alt_text = BeautifulSoup(text, "html.parser").find_all('img')[0]['alt']
 
-    #if img_url:
-        #img_response = requests.get(img_url)
-        #img_bytes = img_response.content
+    img_tags = BeautifulSoup(Coraline_Text, "html.parser").find_all('img')
 
-        #await update.message.reply_photo(photo=img_bytes, caption=alt_text)
-    #else:
-        #await update.message.reply_text(text)
+    if img_tags:
+        img_tag = img_tags[0]
+        img_data_uri = img_tag['src']
+        alt_text = img_tag['alt']
 
-    Coraline_JP = translate_text(Coraline_Text)
-    speak(Coraline_JP)
-    audio_JP = 'output.wav'
-    performer = "Coraline"  # Replace with your bot's name
-    title = " "
-    #audio_response = requests.get(audio_JP)
-    #audio_bytes = audio_response.content
+        if img_data_uri.startswith('data:image/jpeg;base64'):
+            
+            img_data = img_data_uri.split(',')[1]
+            img_bytes = base64.b64decode(img_data)
 
-    sentence_delimiters = ['.', '!', '?']
+            await update.message.reply_photo(photo=img_bytes, caption=alt_text)
+            history_append(update.message.text, alt_text)
+        else:
+            await send_message(update, Coraline_Text)
+            #await update.message.reply_text(Coraline_Text)
+            history_append(update.message.text, Coraline_Text)
+    else:
+        await send_message(update, Coraline_Text)
+        #await update.message.reply_text(Coraline_Text)
+        history_append(update.message.text, Coraline_Text)
 
-    sentences = []
 
-    current_sentence = ''
-    for char in Coraline_Text:
-        current_sentence += char
-        if char in sentence_delimiters:
-            sentences.append(current_sentence.strip())
-            current_sentence = ''
-
-    for sentence in sentences:
-        if sentence:
-            await update.message.reply_text(sentence)
-    
-    #await update.message.reply_audio(audio=open(audio_JP, 'rb'))
-    output_text = "output.txt"
-
-    with open(output_text, 'w', encoding='utf-8') as text:
-        text.write(Coraline_JP)
-
-    await update.message.reply_audio(audio=open(audio_JP, 'rb'))
     #await context.bot.send_audio(chat_id=update.effective_chat.id, audio=open(audio_JP, 'rb'))
 
 
