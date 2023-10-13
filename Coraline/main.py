@@ -14,7 +14,9 @@ import asyncio
 
 from bs4 import BeautifulSoup
 import base64
-import io
+import io 
+from PIL import Image
+from io import BytesIO
 
 load_dotenv()
 CREATOR_ID = os.getenv('CREATOR_ID')
@@ -26,7 +28,7 @@ async def send_message(update: Update, Coraline_Text):
     Coraline_JP = translate_text(Coraline_Text)
     speak(Coraline_JP)
     audio_JP = 'output.wav'
-    performer = "Coraline"  # Replace with your bot's name
+    performer = "Coraline"
     title = " "
 
     sentence_delimiters = ['.', '!', '?']
@@ -118,8 +120,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             img_data = img_data_uri.split(',')[1]
             img_bytes = base64.b64decode(img_data)
 
-            await update.message.reply_photo(photo=img_bytes, caption=alt_text)
+            await update.message.reply_photo(photo=img_bytes)#, caption=alt_text
+            await send_message(update, alt_text)
             history_append(update.message.text, alt_text)
+            
+            image = Image.open(BytesIO(img_bytes))
+            output_directory = "Pictures/"
+            picture_time = current_time.strftime('%m-%d-%M')
+            print(f"Formatted Time: {picture_time}")
+            output_filename = f"{picture_time}.jpg"
+            output_path = output_directory + output_filename
+            image.save(output_path)
         else:
             await send_message(update, Coraline_Text)
             #await update.message.reply_text(Coraline_Text)
