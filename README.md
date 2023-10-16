@@ -12,3 +12,6 @@ Stable Diffusion add-on - Working but not how I want it to
 
 More long-term/complex memory - Not Done
 
+
+Google Calendar - Not done
+
